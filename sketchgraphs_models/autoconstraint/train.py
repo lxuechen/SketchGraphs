@@ -8,19 +8,16 @@ import json
 import os
 import time
 
-import torch
-import torch.utils.tensorboard
-import torch.utils.data
-
 # numpy has come after pytorch due to MKL threading setup
 import numpy as np
+import torch
+import torch.utils.data
+import torch.utils.tensorboard
 
-from sketchgraphs_models.nn.distributed import SingleDeviceDistributedParallel
-
-from sketchgraphs_models import training, distributed_utils
+from sketchgraphs_models import distributed_utils, training
 from sketchgraphs_models.autoconstraint import dataset, model as auto_model
 from sketchgraphs_models.graph.train import data_loading
-
+from sketchgraphs_models.nn.distributed import SingleDeviceDistributedParallel
 
 _opt_factories = {
     'sgd': torch.optim.SGD,
@@ -41,7 +38,8 @@ def _lr_schedule(epoch, warmup_epochs=5, decay_epochs=None):
 
 
 class AutoconstraintHarness(training.TrainingHarness):
-    def __init__(self, model, opt, config_train, config_eval, dist_config, scheduler=None, output_dir=None, profile_enabled=False, additional_model_information=None):
+    def __init__(self, model, opt, config_train, config_eval, dist_config, scheduler=None, output_dir=None,
+                 profile_enabled=False, additional_model_information=None):
         super(AutoconstraintHarness, self).__init__(model, opt, config_train, config_eval, dist_config)
         self.scheduler = scheduler
         self.output_dir = output_dir
@@ -82,12 +80,12 @@ class AutoconstraintHarness(training.TrainingHarness):
         if self.is_leader() and self.output_dir is not None and (epoch + 1) % 10 == 0:
             self.log('Saving checkpoint for epoch {}'.format(epoch + 1))
             torch.save({
-                    'opt': self.opt.state_dict(),
-                    'model': self.model.state_dict(),
-                    'epoch': epoch,
-                    'global_step': global_step,
-                    **self.additional_model_information,
-                },
+                'opt': self.opt.state_dict(),
+                'model': self.model.state_dict(),
+                'epoch': epoch,
+                'global_step': global_step,
+                **self.additional_model_information,
+            },
                 os.path.join(self.output_dir, 'model_state_{0}.pt'.format(epoch + 1)))
 
     def write_summaries(self, global_step, losses, accuracies, tb_writer):
@@ -101,13 +99,17 @@ class AutoconstraintHarness(training.TrainingHarness):
             tb_writer.add_scalar('accuracy/' + k, v, global_step)
 
     def print_statistics(self, loss_acc, accuracy_acc):
-        self.log(f'Loss ({loss_acc["average"]:.3f}). Stop ({loss_acc["edge_stop"]:.3f}) Partner ({loss_acc["edge_partner"]:.3f}) Label ({loss_acc["edge_label"]:.3f})')
-        self.log(f'Accuracy Stop({accuracy_acc["edge_stop"]:4.1%}) Partner ({accuracy_acc["edge_partner"]:4.1%}) Label ({accuracy_acc["edge_label"]:4.1%})')
+        self.log(
+            f'Loss ({loss_acc["average"]:.3f}). Stop ({loss_acc["edge_stop"]:.3f}) Partner ({loss_acc["edge_partner"]:.3f}) Label ({loss_acc["edge_label"]:.3f})')
+        self.log(
+            f'Accuracy Stop({accuracy_acc["edge_stop"]:4.1%}) Partner ({accuracy_acc["edge_partner"]:4.1%}) Label ({accuracy_acc["edge_label"]:4.1%})')
 
 
-def train(node_feature_mapping, dataloader_train, args, output_dir=None, dataloader_eval=None, batches_per_epoch=None, dist_config=None):
+def train(node_feature_mapping, dataloader_train, args, output_dir=None, dataloader_eval=None, batches_per_epoch=None,
+          dist_config=None):
     print('Building model.')
-    core = auto_model.MODEL_CORES[args['model_core']](args['hidden_size'], node_feature_mapping.feature_dimensions, args['num_prop_rounds'])
+    core = auto_model.MODEL_CORES[args['model_core']](args['hidden_size'], node_feature_mapping.feature_dimensions,
+                                                      args['num_prop_rounds'])
     model = auto_model.AutoconstraintModel(core)
 
     if args['model_state']:
@@ -137,7 +139,7 @@ def train(node_feature_mapping, dataloader_train, args, output_dir=None, dataloa
         model = SingleDeviceDistributedParallel(model.to(device), gpu_id, find_unused_parameters=True)
     else:
         device = torch.device('cuda')
-        model.to(device)   # Set model device
+        model.to(device)  # Set model device
 
     print('Model done building.')
 
@@ -206,8 +208,7 @@ def get_argsparser():
     parser.add_argument('--model_state', default=None, help='Path to saved model state_dict.')
     parser.add_argument('--num_quantize_length', type=int, default=383, help='number of quantization values for length')
     parser.add_argument('--num_quantize_angle', type=int, default=127, help='number of quantization values for angle')
-    parser.add_argument('--batch_size', type=int, default=2048,
-                        help='Training batch size.')
+    parser.add_argument('--batch_size', type=int, default=2048, help='Training batch size.')
     parser.add_argument('--learning_rate', type=float, default=1e-5)
     parser.add_argument('--optimizer', default='adam', choices=list(_opt_factories.keys()))
     parser.add_argument('--hidden_size', type=int, default=384)
@@ -219,7 +220,8 @@ def get_argsparser():
     parser.add_argument('--seed', type=int, default=7)
     parser.add_argument('--world_size', type=int, default=1, help='Number of GPUs to use.')
     parser.add_argument('--profile', action='store_true', help='Whether to produce autograd profiles')
-    parser.add_argument('--model_core', type=str, default='bidirectional_recurrent', choices=list(auto_model.MODEL_CORES.keys()))
+    parser.add_argument('--model_core', type=str, default='bidirectional_recurrent',
+                        choices=list(auto_model.MODEL_CORES.keys()))
 
     return parser
 
@@ -321,6 +323,7 @@ def main():
         distributed_utils.train_boostrap_distributed(vars(args), run)
     else:
         run(vars(args))
+
 
 if __name__ == '__main__':
     main()
