@@ -67,16 +67,17 @@ def train(node_feature_mapping, edge_feature_mapping, dataloader_train, args, ou
     print('Building model.')
     feature_dimensions = {**_feature_dimension(node_feature_mapping), **_feature_dimension(edge_feature_mapping)}
     model = make_model_with_arguments(feature_dimensions, args)
+    num_params = sum([p.numel() for p in model.parameters()])
+    print(f'model has: {num_params / 1e6:.4f} million parameters')
 
     if args['model_state']:
         state = torch.load(args['model_state'], map_location=torch.device('cpu'))
 
-        ## Remove "module." from beginning of keys
+        # Remove "module." from beginning of keys
         new_state_dict = {}
         for key in state['model']:
             new_state_dict[key[7:]] = state['model'][key]
         state['model'] = new_state_dict
-        ##
 
         model.load_state_dict(state['model'])
         epoch = state['epoch']
