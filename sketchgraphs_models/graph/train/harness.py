@@ -46,6 +46,7 @@ class GraphModelHarness(training.TrainingHarness):
     The harness is responsible for coordinating all the procedures that surround training,
     such as learning rate scheduling, data loading, and logging.
     """
+
     def __init__(self, model, opt, node_feature_dimension, edge_feature_dimension,
                  config_train, config_eval=None, scheduler=None, output_dir=None, dist_config=None,
                  profile_enabled=False, additional_model_information=None):
@@ -69,7 +70,6 @@ class GraphModelHarness(training.TrainingHarness):
 
         self.edge_feature_summaries = _make_feature_summary(edge_feature_dimension)
         self.node_feature_summaries = _make_feature_summary(node_feature_dimension)
-
 
     def _get_profile_path(self, global_step):
         if not self.profile_enabled:
