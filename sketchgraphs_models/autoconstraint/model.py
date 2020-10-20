@@ -150,7 +150,8 @@ class BidirectionalRecurrentModelCore(torch.nn.Module):
         self.edge_embedding = torch.nn.Embedding(len(target.EDGE_TYPES), embedding_dim)
 
         self.message_passing = sg_nn.MessagePassingNetwork(
-            depth, torch.nn.GRUCell(embedding_dim, embedding_dim),
+            depth,
+            torch.nn.GRUCell(embedding_dim, embedding_dim),
             sg_nn.ConcatenateLinear(embedding_dim, embedding_dim, embedding_dim))
 
         self.graph_post_embedding = message_passing.GraphPostEmbedding(embedding_dim)
@@ -173,8 +174,8 @@ class BidirectionalRecurrentModelCore(torch.nn.Module):
                 start_dim=1)
 
         with torch.autograd.profiler.record_function('message_passing'):
-            node_pre_embedding_graph_bidir = node_pre_embedding_transformed.data.index_select(0, data[
-                'node_features_graph_index'])
+            node_pre_embedding_graph_bidir = node_pre_embedding_transformed.data.index_select(
+                0, data['node_features_graph_index'])
             node_pre_embedding_graph = self.node_pre_embedding_merge_direction(node_pre_embedding_graph_bidir)
             edge_pre_embedding = self.edge_embedding(graph.edge_features)
 

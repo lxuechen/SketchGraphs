@@ -1,7 +1,7 @@
 """This module provides utilities and generic build blocks for graph neural networks."""
 
-import contextlib
 import torch
+
 
 def autograd_range(name):
     """ Creates an autograd range for pytorch autograd profiling
@@ -29,7 +29,7 @@ def aggregate_by_incidence(values: torch.Tensor, incidence: torch.Tensor,
         A tensor of rank at least 2
     incidence : torch.Tensor
         a `[2, k]` tensor
-    transform_edge_messages : function, optional
+    transform_edge_messages : function | torch.nn.Module, optional
         an arbitrary function which transforms edge messages.
     transform_edge_messages_args : any
         Arbitrary set of arguments that are passed to the `transform_edge_messages` function.
@@ -71,6 +71,7 @@ class MessagePassingNetwork(torch.nn.Module):
     This class implements the main plumbing for a message passing network.
     but exposes points that can be configured to easily create different variants of the networks.
     """
+
     def __init__(self, depth, message_aggregation_network, transform_edge_messages=None):
         """ Creates a new module representing the message passing network.
         Parameters
@@ -91,7 +92,6 @@ class MessagePassingNetwork(torch.nn.Module):
         self.depth = depth
         self.message_aggregation_network = message_aggregation_network
         self.transform_edge_messages = transform_edge_messages
-
 
     __constants__ = ["depth"]
 
@@ -124,6 +124,7 @@ class MessagePassingNetwork(torch.nn.Module):
 
 class ConcatenateLinear(torch.nn.Module):
     """A torch module which concatenates several inputs and mixes them using a linear layer. """
+
     def __init__(self, left_size, right_size, output_size):
         """Creates a new concatenating linear layer.
 
@@ -152,6 +153,7 @@ class Sequential(torch.nn.Module):
     """ Similar to `torch.nn.Sequential`, except can pass through modules which
     take multiple input arguments, and return tuples.
     """
+
     def __init__(self, *args):
         super(Sequential, self).__init__()
         self._sequence_modules = torch.nn.ModuleList(args)
