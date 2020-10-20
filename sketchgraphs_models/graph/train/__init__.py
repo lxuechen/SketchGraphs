@@ -2,31 +2,23 @@
 
 import argparse
 import bisect
-import collections
 import datetime
 import functools
-import itertools
 import json
 import os
 import time
 
-import torch
-from torch import multiprocessing
-import torch.utils.tensorboard
-import torch.utils.data
-
 # numpy has come after pytorch due to MKL threading setup
 import numpy as np
+import torch
+import torch.utils.data
+import torch.utils.tensorboard
 
-from sketchgraphs_models.nn import summary
+from sketchgraphs_models import distributed_utils, training
+from sketchgraphs_models.graph import model as graph_model
 from sketchgraphs_models.nn.distributed import SingleDeviceDistributedParallel
-
-from sketchgraphs_models import training, distributed_utils
-from sketchgraphs_models.graph import dataset, model as graph_model
-
-from .harness import GraphModelHarness
 from .data_loading import initialize_datasets
-
+from .harness import GraphModelHarness
 
 _opt_factories = {
     'sgd': torch.optim.SGD,
@@ -49,7 +41,8 @@ def _lr_schedule(epoch, warmup_epochs=5, decay_epochs=None):
 def make_model_with_arguments(feature_dimensions, args):
     return graph_model.make_graph_model(
         args['hidden_size'], feature_dimensions,
-        readout_entity_features=not args.get('disable_entity_features', False) or args.get('force_entity_categorical_features', False),
+        readout_entity_features=not args.get('disable_entity_features', False) or args.get(
+            'force_entity_categorical_features', False),
         readout_edge_features=not args.get('disable_edge_features', False),
         readin_entity_features=False if args.get('disable_readin_entity', False) else None,
         readin_edge_features=False if args.get('disable_readin_edge', False) else None)
@@ -69,7 +62,8 @@ def _state_dict(mapping):
     return mapping.state_dict()
 
 
-def train(node_feature_mapping, edge_feature_mapping, dataloader_train, args, output_dir=None, dataloader_eval=None, batches_per_epoch=None, dist_config=None):
+def train(node_feature_mapping, edge_feature_mapping, dataloader_train, args, output_dir=None, dataloader_eval=None,
+          batches_per_epoch=None, dist_config=None):
     print('Building model.')
     feature_dimensions = {**_feature_dimension(node_feature_mapping), **_feature_dimension(edge_feature_mapping)}
     model = make_model_with_arguments(feature_dimensions, args)
@@ -101,7 +95,7 @@ def train(node_feature_mapping, edge_feature_mapping, dataloader_train, args, ou
         model = SingleDeviceDistributedParallel(model.to(device), gpu_id, find_unused_parameters=True)
     else:
         device = torch.device('cuda')
-        model.to(device)   # Set model device
+        model.to(device)  # Set model device
 
     print('Model done building.')
 
@@ -209,7 +203,6 @@ _ARGS_PATH_KEYS = (
     'dataset_test',
     'model_state'
 )
-
 
 
 def run(args, distributed_config=None):
