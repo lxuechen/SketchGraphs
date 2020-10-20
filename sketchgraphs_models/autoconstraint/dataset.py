@@ -4,8 +4,8 @@ import numpy as np
 import torch
 
 from sketchgraphs.data import sequence as datalib
-from sketchgraphs.pipeline.graph_model.target import NODE_TYPES, EDGE_TYPES, EDGE_TYPES_PREDICTED, NODE_IDX_MAP, EDGE_IDX_MAP
 from sketchgraphs.pipeline import graph_model as graph_utils
+from sketchgraphs.pipeline.graph_model.target import EDGE_IDX_MAP, EDGE_TYPES_PREDICTED, NODE_IDX_MAP
 
 
 def _reindex_sparse_batch(sparse_batch, pack_batch_offsets):
@@ -37,7 +37,8 @@ def collate(batch):
         sparse_node_features[k] = graph_utils.SparseFeatureBatch.merge(
             [_reindex_sparse_batch(x['sparse_node_features'][k], batch_offsets) for x in batch], range(len(batch)))
 
-    last_graph_node_index = batch_offsets[graph.node_counts - 1] + torch.arange(len(graph.node_counts), dtype=torch.int64)
+    last_graph_node_index = batch_offsets[graph.node_counts - 1] + torch.arange(len(graph.node_counts),
+                                                                                dtype=torch.int64)
 
     partner_index_index = []
     partner_index = []
@@ -72,7 +73,6 @@ def collate(batch):
     }
 
 
-
 def process_node_and_edge_ops(node_ops, edge_ops_in_graph, num_nodes_in_graph, node_feature_mappings):
     all_node_labels = torch.tensor([NODE_IDX_MAP[op.label] for op in node_ops], dtype=torch.int64)
     edge_labels = torch.tensor([EDGE_IDX_MAP[op.label] for op in edge_ops_in_graph], dtype=torch.int64)
@@ -98,7 +98,6 @@ def process_node_and_edge_ops(node_ops, edge_ops_in_graph, num_nodes_in_graph, n
         'node_features': all_node_labels,
         'sparse_node_features': sparse_node_features
     }
-
 
 
 class AutoconstraintDataset(torch.utils.data.Dataset):
@@ -158,7 +157,8 @@ class AutoconstraintDataset(torch.utils.data.Dataset):
         if stop_target:
             target_node_idx = self._rng.integers(len(node_ops))
             num_nodes_in_graph = target_node_idx + 1
-            edge_ops_in_graph = edge_ops[:predicted_edge_ops_offsets[target_node_idx] + non_predicted_edge_ops_offsets[target_node_idx]]
+            edge_ops_in_graph = edge_ops[:predicted_edge_ops_offsets[target_node_idx] + non_predicted_edge_ops_offsets[
+                target_node_idx]]
             target_edge_label = -1
             partner_index = -1
         else:
