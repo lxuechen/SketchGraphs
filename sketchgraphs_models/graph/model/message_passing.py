@@ -4,20 +4,21 @@ the message passing.
 
 import torch
 
-from sketchgraphs_models import nn as sg_nn
 import sketchgraphs_models.nn.functional
 from sketchgraphs.pipeline import graph_model
+from sketchgraphs_models import nn as sg_nn
 
 
 class DenseSparsePreEmbedding(torch.nn.Module):
     """This is a generic pre-embedding module which combines dense and sparse pre-embeddings."""
+
     def __init__(self, target_type, feature_embeddings, fixed_embedding_cardinality, fixed_embedding_dim,
                  sparse_embedding_dim=None, embedding_dim=None):
         """Initializes a new DenseSparsePreEmbedding module.
 
         Parameters
         ----------
-        target_type : enum
+        target_type : enum | type
             The underlying enumeration indicating target types
         feature_embeddings : dict of modules
             A dictionary of embeddings for each of the sparse feature types.
@@ -62,6 +63,7 @@ class DenseOnlyEmbedding(torch.nn.Module):
     This class is simply provided for compatibility with `DenseSparsePreEmbedding`, to construct
     models where sparse embeddings are not present.
     """
+
     def __init__(self, cardinality, dimension):
         super(DenseOnlyEmbedding, self).__init__()
         self.fixed_embedding = torch.nn.Embedding(cardinality, dimension)
@@ -76,6 +78,7 @@ class GraphModelCore(torch.nn.Module):
     This component is responsible for the computation that is independent of any
     specific target (edge / node). It is split off to ease sharing with sampling models.
     """
+
     def __init__(self, message_passing, node_embedding, edge_embedding, graph_embedding):
         super(GraphModelCore, self).__init__()
         self.message_passing = message_passing
@@ -98,6 +101,7 @@ class GraphModelCore(torch.nn.Module):
 class GraphPostEmbedding(torch.nn.Module):
     """Component of the graph model which computes graph-wide representation by aggregating node representations.
     """
+
     def __init__(self, hidden_size, graph_embedding_size=None):
         super(GraphPostEmbedding, self).__init__()
 

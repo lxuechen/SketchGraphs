@@ -128,14 +128,16 @@ class BidirectionalRecurrentModelCore(torch.nn.Module):
         self.embedding_dim = embedding_dim
 
         self.node_embedding = message_passing.DenseSparsePreEmbedding(
-            target.TargetType, {
+            target_type=target.TargetType,
+            feature_embeddings={
                 k.name: torch.nn.Sequential(
                     numerical_features.NumericalFeatureEncoding(fd.values(), embedding_dim),
                     numerical_features.NumericalFeaturesEmbedding(embedding_dim)
                 )
                 for k, fd in feature_dims.items()
             },
-            len(target.NODE_TYPES), embedding_dim)
+            fixed_embedding_cardinality=len(target.NODE_TYPES),
+            fixed_embedding_dim=embedding_dim)
 
         self.node_pre_embedding_transform = torch.nn.GRU(
             input_size=embedding_dim,
