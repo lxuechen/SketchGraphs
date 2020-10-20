@@ -169,8 +169,8 @@ class BidirectionalRecurrentModelCore(torch.nn.Module):
                 node_pre_embedding, data['node_features'].batch_sizes)
             node_pre_embedding_transformed, state = self.node_pre_embedding_transform(node_pre_embedding_packed)
 
-            global_embedding = torch.flatten(torch.transpose(
-                state.view(3, 2, -1, self.embedding_dim)[-1], 0, 1),
+            global_embedding = torch.flatten(
+                torch.transpose(state.view(3, 2, -1, self.embedding_dim)[-1], 0, 1),
                 start_dim=1)
 
         with torch.autograd.profiler.record_function('message_passing'):
