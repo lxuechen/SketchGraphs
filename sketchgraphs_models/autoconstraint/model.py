@@ -200,7 +200,7 @@ class AutoconstraintModel(torch.nn.Module):
         embedding_dim = model_core.embedding_dim
 
         self.edge_partner_network = EdgePartnerNetwork(
-            torch.nn.Sequential(
+            readout_net=torch.nn.Sequential(
                 torch.nn.Linear(3 * embedding_dim, embedding_dim),
                 torch.nn.ReLU(),
                 torch.nn.Linear(embedding_dim, 1)))

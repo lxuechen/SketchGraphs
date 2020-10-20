@@ -7,6 +7,7 @@ thin wrappers over collections of torch tensors.
 
 import dataclasses
 import typing
+
 import torch
 
 
@@ -164,7 +165,6 @@ class GraphInfo:
     sparse_node_features: typing.Dict[str, SparseFeatureBatch] = None
     sparse_edge_features: typing.Dict[str, SparseFeatureBatch] = None
 
-
     def _getslice(self, start, stop, step):
         if step != 1:
             raise ValueError('can only obtain contiguous slices')
@@ -206,9 +206,8 @@ class GraphInfo:
             slice_incidence, node_counts, node_offsets, edge_counts, edge_offsets,
             slice_node_data, slice_edge_data, sparse_node_features, sparse_edge_features)
 
-
     def gather(self, indices):
-        """Creates a sub-batch of graphes from the given batches in this instance of `GraphInfo`.
+        """Creates a sub-batch of graphs from the given batches in this instance of `GraphInfo`.
 
         Parameters
         ----------
@@ -222,7 +221,6 @@ class GraphInfo:
         """
         slices = [self[int(i)] for i in indices]
         return GraphInfo.merge(*slices)
-
 
     def __getitem__(self, idx):
         """Extracts a graph or a range of graphs from the batch.
@@ -254,7 +252,6 @@ class GraphInfo:
 
     def __len__(self):
         return len(self.node_counts)
-
 
     @staticmethod
     def from_single_graph(incidence, node_features=None, edge_features=None, num_nodes=None,
@@ -301,7 +298,6 @@ class GraphInfo:
 
         return GraphInfo(incidence, node_counts, node_offsets, edge_counts, edge_offsets,
                          node_features, edge_features, sparse_node_features, sparse_edge_features)
-
 
     @staticmethod
     def merge(*graphs):
