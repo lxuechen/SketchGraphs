@@ -130,6 +130,7 @@ class TrainingConfig(typing.NamedTuple):
 
 class TrainingHarness(abc.ABC):
     """This class implements the main training loop."""
+
     def __init__(self, model, opt, config_train: TrainingConfig, config_eval: TrainingConfig = None,
                  dist_config: distributed_utils.DistributedTrainingInfo = None):
         """Creates a new harness for the given model.
@@ -152,7 +153,6 @@ class TrainingHarness(abc.ABC):
         self.config_train = config_train
         self.config_eval = config_eval
         self.dist_config = dist_config
-
 
     @abc.abstractmethod
     def single_step(self, batch, global_step):
@@ -229,7 +229,6 @@ class TrainingHarness(abc.ABC):
         if self.dist_config:
             total_batch_size *= self.dist_config.world_size
 
-
         self.model.train()
 
         for j, batch in enumerate(self.config_train.dataloader):
@@ -288,7 +287,6 @@ class TrainingHarness(abc.ABC):
             print('Warning: incomplete epoch')
 
         return epoch, global_step
-
 
     def run_holdout_eval(self, epoch, global_step):
         """Runs the holdout evaluation process.
