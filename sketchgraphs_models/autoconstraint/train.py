@@ -108,8 +108,11 @@ class AutoconstraintHarness(training.TrainingHarness):
 def train(node_feature_mapping, dataloader_train, args, output_dir=None, dataloader_eval=None, batches_per_epoch=None,
           dist_config=None):
     print('Building model.')
-    core = auto_model.MODEL_CORES[args['model_core']](args['hidden_size'], node_feature_mapping.feature_dimensions,
-                                                      args['num_prop_rounds'])
+    core = auto_model.MODEL_CORES[args['model_core']](
+        args['hidden_size'],
+        node_feature_mapping.feature_dimensions,
+        args['num_prop_rounds']
+    )
     model = auto_model.AutoconstraintModel(core)
 
     if args['model_state']:
