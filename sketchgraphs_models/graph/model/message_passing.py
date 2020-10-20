@@ -29,7 +29,7 @@ class DenseSparsePreEmbedding(torch.nn.Module):
         sparse_embedding_dim : int, optional
             The dimension of the sparse embeddings. If None, assumed to be the same as the dense embedding.
         embedding_dim : int, optional
-            The outpu dimension of the embedding. If None, assumed to be the same as the dense embedding.
+            The output dimension of the embedding. If None, assumed to be the same as the dense embedding.
         """
         super(DenseSparsePreEmbedding, self).__init__()
         sparse_embedding_dim = sparse_embedding_dim or fixed_embedding_dim

@@ -2,13 +2,12 @@
 
 import enum
 
-from sketchgraphs.data import sketch as datalib, sequence as data_sequence
+from sketchgraphs.data import sketch as datalib
 
 NODE_TYPES_PREDICTED = list(datalib.EntityType)
 EDGE_TYPES_PREDICTED = list(x for x in datalib.ConstraintType if x != datalib.ConstraintType.Subnode)
 NODE_TYPES = list(datalib.EntityType) + list(datalib.SubnodeType)
 EDGE_TYPES = list(datalib.ConstraintType)
-
 
 EDGE_IDX_MAP = {t: i for i, t in enumerate(datalib.ConstraintType)}
 NODE_IDX_MAP = {t: i for i, t in enumerate(list(datalib.EntityType) + list(datalib.SubnodeType))}
@@ -81,6 +80,7 @@ class TargetType(enum.IntEnum):
     @staticmethod
     def node_types():
         return (TargetType.NodeGeneric,) + TargetType.numerical_node_types()
+
 
 _str_to_numerical_edge = {
     t.name.upper(): t
