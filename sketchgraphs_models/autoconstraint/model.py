@@ -3,10 +3,9 @@
 
 import torch
 
-from sketchgraphs.pipeline.graph_model import target, scopes_from_offsets
-
-from sketchgraphs_models.graph.model import EdgePartnerNetwork, numerical_features, message_passing
+from sketchgraphs.pipeline.graph_model import scopes_from_offsets, target
 from sketchgraphs_models import nn as sg_nn
+from sketchgraphs_models.graph.model import EdgePartnerNetwork, message_passing, numerical_features
 
 
 class GlobalEmbeddingModelCore(torch.nn.Module):
@@ -96,7 +95,6 @@ class RecurrentEmbeddingModelCore(torch.nn.Module):
 
         self.merge_global_embedding = sg_nn.ConcatenateLinear(embedding_dim, 2 * embedding_dim, embedding_dim)
 
-
     def forward(self, data):
         graph = data['graph']
 
@@ -111,7 +109,8 @@ class RecurrentEmbeddingModelCore(torch.nn.Module):
             global_embedding = state[-1]
 
         with torch.autograd.profiler.record_function('message_passing'):
-            node_pre_embedding_graph = node_pre_embedding_transformed.data.index_select(0, data['node_features_graph_index'])
+            node_pre_embedding_graph = node_pre_embedding_transformed.data.index_select(0, data[
+                'node_features_graph_index'])
             edge_pre_embedding = self.edge_embedding(graph.edge_features)
 
             node_post_embedding = self.message_passing(node_pre_embedding_graph, graph.incidence, (edge_pre_embedding,))
@@ -172,7 +171,8 @@ class BidirectionalRecurrentModelCore(torch.nn.Module):
                 start_dim=1)
 
         with torch.autograd.profiler.record_function('message_passing'):
-            node_pre_embedding_graph_bidir = node_pre_embedding_transformed.data.index_select(0, data['node_features_graph_index'])
+            node_pre_embedding_graph_bidir = node_pre_embedding_transformed.data.index_select(0, data[
+                'node_features_graph_index'])
             node_pre_embedding_graph = self.node_pre_embedding_merge_direction(node_pre_embedding_graph_bidir)
             edge_pre_embedding = self.edge_embedding(graph.edge_features)
 
@@ -212,7 +212,6 @@ class AutoconstraintModel(torch.nn.Module):
             torch.nn.ReLU(),
             torch.nn.Linear(embedding_dim, len(target.EDGE_TYPES_PREDICTED)))
 
-
     def _compute_label_logits_partner(self, graph, node_post_embedding, global_embedding, partner_index):
         node_current_post_embedding_label = node_post_embedding.index_select(
             0, graph.node_offsets[1:][partner_index.index] - 1)
@@ -220,14 +219,15 @@ class AutoconstraintModel(torch.nn.Module):
         merged_global_embedding_label = global_embedding.index_select(0, partner_index.index)
 
         edge_label_input = torch.cat(
-            (node_current_post_embedding_label, node_partner_post_embedding_label, merged_global_embedding_label), dim=-1)
+            (node_current_post_embedding_label, node_partner_post_embedding_label, merged_global_embedding_label),
+            dim=-1)
 
         return self.edge_label(edge_label_input)
 
     def _compute_all_label_logits(self, graph, node_post_embedding, global_embedding):
         node_current_post_embedding = (node_post_embedding
-            .index_select(0, graph.node_offsets[1:] - 1)
-            .repeat_interleave(graph.node_counts, 0))
+                                       .index_select(0, graph.node_offsets[1:] - 1)
+                                       .repeat_interleave(graph.node_counts, 0))
 
         global_embedding = global_embedding.repeat_interleave(graph.node_counts, 0)
 
@@ -289,8 +289,8 @@ def segment_stop_accuracy(partner_logits, segment_offsets, target_idx, stop_part
     prediction_stop_correct = (max_logit_in_segment < 0).index_select(0, stop_partner_index_index)
 
     prediction_partner_correct = (
-        (max_logit_in_segment > 0).index_select(0, target_idx.indices) &
-        ((max_logit_indices + segment_offsets[:-1]).index_select(0, target_idx.indices) == target_idx.values))
+            (max_logit_in_segment > 0).index_select(0, target_idx.indices) &
+            ((max_logit_indices + segment_offsets[:-1]).index_select(0, target_idx.indices) == target_idx.values))
 
     return prediction_stop_correct.float().mean(), prediction_partner_correct.float().mean()
 
@@ -315,19 +315,18 @@ def compute_losses(data, readout, reduction='sum'):
         edge_label_accuracy = readout['edge_label_logits'].new_empty([0])
 
     return {
-        'edge_partner': partner_loss,
-        'edge_stop': edge_stop_loss,
-        'edge_label': edge_label_loss,
-    }, {
-        'edge_partner': edge_partner_accuracy,
-        'edge_stop': edge_stop_accuracy,
-        'edge_label': edge_label_accuracy,
-    }
+               'edge_partner': partner_loss,
+               'edge_stop': edge_stop_loss,
+               'edge_label': edge_label_loss,
+           }, {
+               'edge_partner': edge_partner_accuracy,
+               'edge_stop': edge_stop_accuracy,
+               'edge_label': edge_label_accuracy,
+           }
 
 
 def compute_average_losses(data, losses):
-    result = {}
-    result['edge_partner'] = losses['edge_partner'] / data['edge_label'].shape[0]
-    result['edge_label'] = losses['edge_label'] / data['edge_label'].shape[0]
-    result['edge_stop'] = losses['edge_stop'] / data['stop_partner_index_index'].shape[0]
+    result = {'edge_partner': losses['edge_partner'] / data['edge_label'].shape[0],
+              'edge_label': losses['edge_label'] / data['edge_label'].shape[0],
+              'edge_stop': losses['edge_stop'] / data['stop_partner_index_index'].shape[0]}
     return result
