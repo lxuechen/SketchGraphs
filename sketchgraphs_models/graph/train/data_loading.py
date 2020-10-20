@@ -2,17 +2,16 @@
 
 import functools
 import gzip
-import pickle
 import os
+import pickle
 
 import numpy as np
 import torch
 
-from sketchgraphs_models import distributed_utils
-from sketchgraphs_models.nn import data_util
-from sketchgraphs_models.graph import dataset
-
 from sketchgraphs.data import flat_array
+from sketchgraphs_models import distributed_utils
+from sketchgraphs_models.graph import dataset
+from sketchgraphs_models.nn import data_util
 
 
 def load_sequences_and_mappings(dataset_file, auxiliary_file, quantization, entity_features=True, edge_features=True):
@@ -86,8 +85,7 @@ def make_dataloader_train(collate_fn, ds_train, weights, batch_size, num_epochs,
         sampler = distributed_utils.DistributedSampler(
             sampler, distributed_config.world_size, distributed_config.rank)
 
-    batch_sampler = torch.utils.data.BatchSampler(
-        sampler, batch_size, drop_last=False)
+    batch_sampler = torch.utils.data.BatchSampler(sampler, batch_size, drop_last=False)
 
     dataloader_train = torch.utils.data.DataLoader(
         ds_train,
