@@ -6,12 +6,10 @@ import numpy as np
 import torch
 import tqdm
 
+from sketchgraphs.data import flat_array
 from sketchgraphs_models import training
-
 from sketchgraphs_models.graph import dataset, sample
 from sketchgraphs_models.graph import model as graph_model
-
-from sketchgraphs.data import flat_array
 
 
 def _total_loss(losses):

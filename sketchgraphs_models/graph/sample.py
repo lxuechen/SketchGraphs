@@ -2,28 +2,27 @@
 """
 
 import argparse
+import enum
 import gzip
 import json
-import enum
 import multiprocessing as mp
 import os
 import pickle
 
-import torch
 import numpy as np
+import torch
 import tqdm
 
 from sketchgraphs.data import sketch as datalib
-from sketchgraphs.data.sequence import NodeOp, EdgeOp
+from sketchgraphs.data.sequence import EdgeOp, NodeOp
 from sketchgraphs.data.sketch import EntityType
 from sketchgraphs.pipeline import graph_model as graph_utils
 from sketchgraphs.pipeline.graph_model import target
-
 from sketchgraphs_models import training
 from sketchgraphs_models.graph import dataset, model as graph_model
 from sketchgraphs_models.nn import functional as sg_functional
-
 from .train import make_model_with_arguments
+
 
 # pylint: disable=no-member
 
@@ -114,7 +113,6 @@ class GraphSamplingModel(torch.nn.Module):
 
         return node_label_samples
 
-
     def sample_entity_features(self, graph, target_type, features, generator=None):
         """Samples entity features.
 
@@ -152,7 +150,6 @@ class GraphSamplingModel(torch.nn.Module):
             current_offset += dim
 
         return torch.cat(labels, dim=-1)
-
 
     def sample_edge_target(self, graph, generator=None):
         """Samples edge targets.
@@ -216,7 +213,6 @@ class GraphSamplingModel(torch.nn.Module):
             1, replacement=True, generator=generator).squeeze(-1)
 
         return edge_labels
-
 
     def sample_edge_features(self, graph, targets, target_type, numerical_features, generator=None):
         node_post_embedding, graph_embedding = self.model_core({'graph': graph})
@@ -311,7 +307,6 @@ def _sample_edges(model: GraphSamplingModel, graph, edge_feature_mapping, genera
                 graph_with_targets, partners, target_type, numerical_features, generator)
             numerical_features[0, feat_idx] = sampled_features[feat_idx]
 
-
     node_counts = graph_with_targets.node_counts.tolist()
 
     for i, idx in enumerate(idx_targets):
@@ -340,7 +335,8 @@ def _sample_edges(model: GraphSamplingModel, graph, edge_feature_mapping, genera
     return result
 
 
-def generate_sample(model: GraphSamplingModel, max_iters, node_feature_mapping, edge_feature_mapping, generator=None, device=None):
+def generate_sample(model: GraphSamplingModel, max_iters, node_feature_mapping, edge_feature_mapping, generator=None,
+                    device=None):
     builder = _SeqBuilder()
     state = 'add_node'
     subnodes_to_add = None
@@ -415,13 +411,17 @@ def _load_sampling_model(args):
     feature_dimensions = {**node_feature_mapping.feature_dimensions, **edge_feature_mapping.feature_dimensions}
     model = model.to(args.device)
 
-    return GraphSamplingModel.from_numerical_model(model, feature_dimensions), node_feature_mapping, edge_feature_mapping
+    return GraphSamplingModel.from_numerical_model(model,
+                                                   feature_dimensions), node_feature_mapping, edge_feature_mapping
+
 
 def sample_iterator(args):
     _set_rng_seeds(args.seed)
     sampling_model, node_feature_mapping, edge_feature_mapping = _load_sampling_model(args)
     for _ in range(args.num_samples):
-        yield generate_sample(sampling_model, args.max_iters, node_feature_mapping, edge_feature_mapping, device=torch.device(args.device))
+        yield generate_sample(sampling_model, args.max_iters, node_feature_mapping, edge_feature_mapping,
+                              device=torch.device(args.device))
+
 
 def sample_and_print(args):
     for i, seq in enumerate(sample_iterator(args)):
@@ -429,6 +429,7 @@ def sample_and_print(args):
         for j, op in enumerate(seq):
             print(j, op)
         print('\n')
+
 
 def sample_and_write_pickle(args, output_path, proc_idx):
     args.seed = args.seed + proc_idx
@@ -460,7 +461,8 @@ def _sample_pickle_with_counter(args, process_id, result_queue):
 def sample_and_write_pickle_multithreaded(args):
     print('Sampling with {0} workers'.format(args.num_procs))
     result_queue = mp.Queue()
-    workers = [mp.Process(target=_sample_pickle_with_counter, args=(args, i, result_queue)) for i in range(args.num_procs)]
+    workers = [mp.Process(target=_sample_pickle_with_counter, args=(args, i, result_queue)) for i in
+               range(args.num_procs)]
 
     for worker in workers:
         worker.start()
@@ -510,6 +512,7 @@ def main():
         sample_and_write_pickle(args, args.output_path, 0)
     else:
         sample_and_write_pickle_multithreaded(args)
+
 
 if __name__ == '__main__':
     main()

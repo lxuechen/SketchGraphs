@@ -7,20 +7,19 @@ import numpy as np
 import torch
 import tqdm
 
-from sketchgraphs_models.graph import dataset, sample
 from sketchgraphs.data import flat_array
-
+from sketchgraphs_models.graph import dataset, sample
 
 
 def sequence_to_integers(seq, node_feature_mapping, edge_feature_mapping):
     graph = dataset.graph_info_from_sequence(seq, node_feature_mapping, edge_feature_mapping)
     all_tensors = (
-        [torch.full([1], fill_value=graph.edge_counts[0], dtype=torch.int64)] +
-        [graph.node_features,
-         graph.edge_features,
-         graph.incidence.flatten()] +
-        [v.value.flatten() for v in graph.sparse_node_features.values()] +
-        [v.value.flatten() for v in graph.sparse_edge_features.values()])
+            [torch.full([1], fill_value=graph.edge_counts[0], dtype=torch.int64)] +
+            [graph.node_features,
+             graph.edge_features,
+             graph.incidence.flatten()] +
+            [v.value.flatten() for v in graph.sparse_node_features.values()] +
+            [v.value.flatten() for v in graph.sparse_edge_features.values()])
 
     integers = torch.cat(all_tensors)
 

@@ -5,11 +5,8 @@ from typing import Any, Dict
 
 import torch
 
-from sketchgraphs.pipeline.graph_model import target, scopes_from_offsets
+from sketchgraphs.pipeline.graph_model import scopes_from_offsets, target
 from sketchgraphs_models.nn import functional as sg_functional
-
-from .. import dataset
-
 
 
 def segment_stop_loss(partner_logits, segment_offsets, target_idx=None):
@@ -93,18 +90,17 @@ def compute_edge_losses(edge_partner_offsets, edge_label_logits, partner_logits,
         edge_partner_logits, edge_partner_offsets, target_idx=edge_partner).float().mean()
 
     return {
-        'edge_label': edge_label_loss,
-        'edge_partner': edge_partner_loss
-    }, {
-        'edge_label': edge_label_accuracy,
-        'edge_partner': edge_partner_accuracy
-    }
+               'edge_label': edge_label_loss,
+               'edge_partner': edge_partner_loss
+           }, {
+               'edge_label': edge_label_accuracy,
+               'edge_partner': edge_partner_accuracy
+           }
 
 
 def compute_node_losses(node_offsets, entity_logits, partner_logits, node_label):
     node_label_loss = torch.nn.functional.cross_entropy(entity_logits, node_label, reduction='sum')
     node_label_accuracy = (torch.argmax(entity_logits, dim=-1) == node_label).float().mean()
-
 
     node_partner_logits = partner_logits[node_offsets[0]:node_offsets[-1]]
     node_partner_offsets = node_offsets - node_offsets[0]
@@ -116,12 +112,12 @@ def compute_node_losses(node_offsets, entity_logits, partner_logits, node_label)
         node_partner_logits, node_partner_offsets).float().mean()
 
     return {
-        'node_label': node_label_loss,
-        'node_stop': node_stop_loss
-    }, {
-        'node_label': node_label_accuracy,
-        'node_stop': node_stop_accuracy
-    }
+               'node_label': node_label_loss,
+               'node_stop': node_stop_loss
+           }, {
+               'node_label': node_label_accuracy,
+               'node_stop': node_stop_accuracy
+           }
 
 
 def compute_subnode_losses(subnode_offsets, partner_logits):
@@ -135,10 +131,10 @@ def compute_subnode_losses(subnode_offsets, partner_logits):
         subnode_partner_logits, subnode_partner_offsets).float().mean()
 
     return {
-        'subnode_stop': subnode_stop_loss
-    }, {
-        'subnode_stop': subnode_stop_accuracy
-    }
+               'subnode_stop': subnode_stop_loss
+           }, {
+               'subnode_stop': subnode_stop_accuracy
+           }
 
 
 def merge_losses_and_accuracy(losses, accuracy, updates, weight=None):
@@ -232,7 +228,6 @@ def compute_losses(readout, batch, feature_dimensions, weights=None):
     graph = batch['graph']
     counts = batch['graph_counts']
 
-
     count_edge = sum(counts[t] for t in target.TargetType.edge_types())
 
     losses = {'edge_features': {}, 'node_features': {}}
@@ -254,7 +249,8 @@ def compute_losses(readout, batch, feature_dimensions, weights=None):
             with torch.autograd.profiler.record_function('edge_feature_losses'):
                 for t, feature_logit in readout['edge_feature_logits'].items():
                     weight = weights.get(t)
-                    losses['edge_features'][t], accuracy['edge_features'][t], edge_label, edge_prob = compute_feature_loss(
+                    losses['edge_features'][t], accuracy['edge_features'][
+                        t], edge_label, edge_prob = compute_feature_loss(
                         feature_logit, batch['edge_numerical'][t], feature_dimensions[t])
                     if weight is not None:
                         losses['edge_features'][t] *= weight
@@ -275,7 +271,8 @@ def compute_losses(readout, batch, feature_dimensions, weights=None):
             with torch.autograd.profiler.record_function('entity_feature_loss'):
                 for t, feature_logit in readout['entity_feature_logits'].items():
                     weight = weights.get(t)
-                    losses['node_features'][t], accuracy['node_features'][t], node_label, node_prob = compute_feature_loss(
+                    losses['node_features'][t], accuracy['node_features'][
+                        t], node_label, node_prob = compute_feature_loss(
                         feature_logit, batch['node_numerical'][t], feature_dimensions[t])
                     if weight is not None:
                         losses['node_features'][t] *= weight
@@ -300,6 +297,7 @@ _loss_to_target_type = {
     'node_label': target.TargetType.node_types(),
     'subnode_stop': [target.TargetType.Subnode],
 }
+
 
 def compute_average_losses(losses, graph_counts):
     """Computes average losses from sum losses.
