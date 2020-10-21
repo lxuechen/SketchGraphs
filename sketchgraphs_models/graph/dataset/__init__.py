@@ -11,7 +11,7 @@ import torch
 
 from sketchgraphs.data import sequence as data_sequence, sketch as data_sketch
 from sketchgraphs.pipeline.graph_model import GraphInfo
-from sketchgraphs.pipeline.graph_model.quantization import EdgeFeatureMapping, EntityFeatureMapping
+from sketchgraphs.pipeline.graph_model.quantization import EdgeFeatureMapping, EntityFeatureMapping, QuantizationMap
 from sketchgraphs.pipeline.graph_model.target import EDGE_IDX_MAP, NODE_IDX_MAP, TargetType
 
 
