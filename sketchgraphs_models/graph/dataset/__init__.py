@@ -4,19 +4,15 @@ All numerical parameters are represented in a one-hot fashion.
 """
 
 import collections
-import enum
-import functools
 import itertools
-import json
 
 import numpy as np
 import torch
 
-from sketchgraphs.data import sketch as data_sketch, sequence as data_sequence
-
+from sketchgraphs.data import sequence as data_sequence, sketch as data_sketch
 from sketchgraphs.pipeline.graph_model import GraphInfo
-from sketchgraphs.pipeline.graph_model.quantization import EdgeFeatureMapping, EntityFeatureMapping, QuantizationMap
-from sketchgraphs.pipeline.graph_model.target import TargetType, NODE_IDX_MAP, EDGE_IDX_MAP, NODE_IDX_MAP_REVERSE, EDGE_IDX_MAP_REVERSE
+from sketchgraphs.pipeline.graph_model.quantization import EdgeFeatureMapping, EntityFeatureMapping
+from sketchgraphs.pipeline.graph_model.target import EDGE_IDX_MAP, NODE_IDX_MAP, TargetType
 
 
 def _onehot(indices, depth):
@@ -55,7 +51,8 @@ def _gather_parameters(constr):
             if param_id in ref_schema:
                 if param.type == data_sketch.ConstraintParameterType.Quantity:
                     parameters[param_id] = param.expression
-                elif param.type in [data_sketch.ConstraintParameterType.Enum, data_sketch.ConstraintParameterType.Boolean]:
+                elif param.type in [data_sketch.ConstraintParameterType.Enum,
+                                    data_sketch.ConstraintParameterType.Boolean]:
                     parameters[param_id] = param.value
     return parameters
 
@@ -65,7 +62,6 @@ def _get_ent_parameters(ent):
     """
     param_ids = type(ent).float_ids + type(ent).bool_ids
     return {param_id: getattr(ent, param_id) for param_id in param_ids}
-
 
 
 def sketch_to_sequence(sketch):
@@ -80,6 +76,7 @@ def _is_subnode_edge(op):
 def _is_stop(node_op):
     return node_op.label == data_sketch.EntityType.Stop.name
 
+
 def _util_dict_get(dict_, key):
     return dict_.get(key, 0)
 
@@ -91,7 +88,8 @@ def _edge_to_tuple(edge_op: data_sequence.EdgeOp):
         return (edge_op.references[0], edge_op.references[1])
 
 
-def graph_info_from_sequence(seq, entity_feature_mapping: EntityFeatureMapping, edge_feature_mapping: EdgeFeatureMapping):
+def graph_info_from_sequence(seq, entity_feature_mapping: EntityFeatureMapping,
+                             edge_feature_mapping: EdgeFeatureMapping):
     """Creates a representation of the sequence as a `GraphInfo` object.
 
     If specified, this function will output the desired feature maps for entities and edges.
@@ -155,6 +153,7 @@ def _numerical_edge_targets(targets, edge_feature_mapping):
 
     return result
 
+
 def _numerical_node_targets(targets, node_feature_mapping):
     if node_feature_mapping is None:
         return None
@@ -181,7 +180,8 @@ def _set_graph_schema(graph, entity_feature_mapping, edge_feature_mapping):
         graph.sparse_edge_features = edge_feature_mapping.all_sparse_features([])
 
 
-def collate(batch, entity_feature_mapping: EntityFeatureMapping = None, edge_feature_mapping: EdgeFeatureMapping = None):
+def collate(batch, entity_feature_mapping: EntityFeatureMapping = None,
+            edge_feature_mapping: EdgeFeatureMapping = None):
     """Collates a batch of examples into a single dictionary suitable for batched computation.
 
     Parameters
@@ -222,16 +222,17 @@ def collate(batch, entity_feature_mapping: EntityFeatureMapping = None, edge_fea
     _set_graph_schema(graph_subnode_targets, entity_feature_mapping, edge_feature_mapping)
 
     # Labels for node / edge type prediction
-    node_label = torch.tensor([NODE_IDX_MAP[op.label] for node_type in TargetType.node_types() for op in group_targets[node_type]],
-                              dtype=torch.int64)
-    edge_label = torch.tensor([EDGE_IDX_MAP[op.label] for edge_type in TargetType.edge_types() for op in group_targets[edge_type]],
-                              dtype=torch.int64)
+    node_label = torch.tensor(
+        [NODE_IDX_MAP[op.label] for node_type in TargetType.node_types() for op in group_targets[node_type]],
+        dtype=torch.int64)
+    edge_label = torch.tensor(
+        [EDGE_IDX_MAP[op.label] for edge_type in TargetType.edge_types() for op in group_targets[edge_type]],
+        dtype=torch.int64)
 
     edge_partner = torch.cat([
         torch.tensor([op.references[-1] for op in group_targets[t]], dtype=torch.int64)
         for t in TargetType.edge_types()
     ]) + graph_edge_targets.node_offsets[:-1]
-
 
     graph_info = GraphInfo.merge(graph_edge_targets, graph_node_targets, graph_subnode_targets)
     edge_numerical = _numerical_edge_targets(group_targets, edge_feature_mapping)

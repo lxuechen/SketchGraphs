@@ -5,16 +5,14 @@ This module contains the implementation of the main graph-based model.
 """
 
 import collections
-import torch
 
-from sketchgraphs_models import nn as sg_nn
-from sketchgraphs_models.graph import dataset
+import torch
 
 from sketchgraphs.pipeline import graph_model
 from sketchgraphs.pipeline.graph_model import target
-
+from sketchgraphs_models import nn as sg_nn
 from . import message_passing, numerical_features
-from .losses import compute_losses, compute_average_losses
+from .losses import compute_average_losses, compute_losses
 
 
 class GraphModel(torch.nn.Module):
@@ -40,6 +38,7 @@ class GraphModel(torch.nn.Module):
     edge_partner : EdgePartnerNetwork
         This module computes the other vertex of a new added edge (on vertex is always the last vertex).
     """
+
     def __init__(self, model_core, entity_label, entity_feature_readout,
                  edge_post_embedding, edge_label, edge_feature_readout, edge_partner):
         super(GraphModel, self).__init__()
@@ -94,7 +93,7 @@ class GraphModel(torch.nn.Module):
 
         with torch.autograd.profiler.record_function('node_label_readout'):
             entity_logits = self.entity_label(
-                graph_embedding[total_constraint_counts:total_constraint_counts+total_entity_counts])
+                graph_embedding[total_constraint_counts:total_constraint_counts + total_entity_counts])
 
         if not self.entity_feature_readout:
             node_feature_logits = None
@@ -127,6 +126,7 @@ class GraphModel(torch.nn.Module):
 
 class EdgePartnerNetwork(torch.nn.Module):
     """Predicts a probability for a new edge from a node to the last node in the graph."""
+
     def __init__(self, readout_net):
         super(EdgePartnerNetwork, self).__init__()
 
@@ -222,7 +222,6 @@ def make_graph_model(hidden_size, feature_dimensions, message_passing_rounds=3,
             target.TargetType, edge_embeddings, len(target.EDGE_TYPES), hidden_size)
     else:
         edge_embedding = message_passing.DenseOnlyEmbedding(len(target.EDGE_TYPES), hidden_size)
-
 
     # Build encoders and decoders for node features
     if readout_entity_features or readin_entity_features:
