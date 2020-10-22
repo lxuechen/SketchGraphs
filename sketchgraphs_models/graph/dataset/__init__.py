@@ -11,7 +11,7 @@ import torch
 
 from sketchgraphs.data import sequence as data_sequence, sketch as data_sketch
 from sketchgraphs.pipeline.graph_model import GraphInfo
-from sketchgraphs.pipeline.graph_model.quantization import EdgeFeatureMapping, EntityFeatureMapping, QuantizationMap
+from sketchgraphs.pipeline.graph_model.quantization import EdgeFeatureMapping, EntityFeatureMapping
 from sketchgraphs.pipeline.graph_model.target import EDGE_IDX_MAP, NODE_IDX_MAP, TargetType
 
 
@@ -83,9 +83,9 @@ def _util_dict_get(dict_, key):
 
 def _edge_to_tuple(edge_op: data_sequence.EdgeOp):
     if len(edge_op.references) == 1:
-        return (edge_op.references[0], edge_op.references[0])
+        return edge_op.references[0], edge_op.references[0]
     else:
-        return (edge_op.references[0], edge_op.references[1])
+        return edge_op.references[0], edge_op.references[1]
 
 
 def graph_info_from_sequence(seq, entity_feature_mapping: EntityFeatureMapping,
@@ -120,7 +120,7 @@ def graph_info_from_sequence(seq, entity_feature_mapping: EntityFeatureMapping,
 
     if len(edge_ops) > 0:
         incidence = torch.tensor([_edge_to_tuple(op) for op in edge_ops], dtype=torch.int64).T.contiguous()
-        incidence = torch.cat((incidence, torch.flip(incidence, [0])), dim=1)
+        incidence = torch.cat((incidence, torch.flip(incidence, [0])), dim=1)  # Make undirected.
     else:
         incidence = torch.empty([2, 0], dtype=torch.int64)
 
